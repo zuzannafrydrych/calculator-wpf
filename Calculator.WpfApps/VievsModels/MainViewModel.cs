@@ -6,6 +6,7 @@ using System.Data;
 using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,24 +14,28 @@ using System.Windows.Input;
 
 namespace Calculator.WpfApps.VievsModels
 {
-    public class MainVievModel : INotifyPropertyChanged
+    public class MainViewModel : INotifyPropertyChanged
     {
 
         private string? _screenVal;
 
-        private List<string> _availableOperations = new List<string> { "+", "-", "/", "*" };
+        private List<string> _availableOperations = new List<string> { "+", "-", "/", "*", "power", "SquareRoot" };
 
         private DataTable _dataTable = new DataTable();
 
         private bool _isLastSignAnOperation;
+        private int num1;
+        private int num2;
 
-        public MainVievModel()
+        public MainViewModel()
         {
             ScreenVal = "0";
             AddNumberCommand = new RelayCommand(AddNumber);
             AddOperationCommand = new RelayCommand(AddOperation, CanAddOperation);
             ClearScreenCommand = new RelayCommand(ClearScreen);
             GetResultCommand = new RelayCommand(GetResult, CanGetResult);
+            CalculateSquareRootCommand = new RelayCommand(CalculateSquareRoot, CanGetResult);
+            CalculatePowerCommand = new RelayCommand(CalculatePower, CanGetResult);
         }
 
         private bool CanGetResult(object obj)
@@ -45,8 +50,39 @@ namespace Calculator.WpfApps.VievsModels
 
         private void GetResult(object obj)
         {
-           var result = _dataTable.Compute(ScreenVal.Replace(",", "."), "");
+            var result = _dataTable.Compute(ScreenVal.Replace(",", "."), "");
             ScreenVal = result.ToString();
+        }
+
+        private void CalculatePower(object obj)
+        {
+            var succeeded = double.TryParse(ScreenVal, out var result);
+
+            if (!succeeded)
+            {
+                ScreenVal = "Error";
+                return;
+            }
+
+            var powerResult = Math.Pow(result, 2);
+            ScreenVal = powerResult.ToString();
+        }
+
+        private void CalculateSquareRoot(object obj)
+        {
+            var addResult = _dataTable.Compute(ScreenVal, "");
+
+            var succeeded = double.TryParse(addResult.ToString(), out var result);
+
+            if (!succeeded)
+            {
+
+                ScreenVal = "Error";
+                return;
+            }
+
+            var squrResult = Math.Sqrt(result);
+            ScreenVal = squrResult.ToString();
         }
 
         private void ClearScreen(object obj)
@@ -82,10 +118,13 @@ namespace Calculator.WpfApps.VievsModels
         public ICommand AddOperationCommand { get; set; }
         public ICommand ClearScreenCommand { get; set; }
         public ICommand GetResultCommand { get; set; }
+        public ICommand CalculateSquareRootCommand { get; set; }
+
+        public ICommand CalculatePowerCommand { get; set; }
 
         public string? ScreenVal
         {
-            get => _screenVal; 
+            get => _screenVal;
             set
             {
                 _screenVal = value;
